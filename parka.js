@@ -1,10 +1,18 @@
 if (Meteor.isClient) {
 
+  ParkingLocations = new Mongo.Collection(null);
+
   Tracker.autorun(function() {
     var myPosition = Session.get("myPosition");
     if (myPosition) {
       Meteor.subscribe("parkings", myPosition.lat, myPosition.lon);
     }
+  });
+
+  Template.registerHelper('parkingLocation', function(parking) {
+    var loc = ParkingLocations.findOne({'parkingId': parking._id});
+    if (!loc) return parking.lat + ', ' + parking.lon;
+    return loc.location;
   });
 
   Template.page.helpers({
@@ -13,7 +21,7 @@ if (Meteor.isClient) {
     },
     parkings: function() {
       return Parkings.find();
-    }
+    },
   });
 
   Template.page.rendered = function() {
@@ -32,10 +40,15 @@ if (Meteor.isClient) {
 
     if (!self.handle) {
       self.handle = Tracker.autorun(function() {
-        var parks = Parkings.find().fetch();
-        gmaps.deleteMarkers();
-        _.each(parks, function(park) {
-          gmaps.placeMarker(park._id, new google.maps.LatLng(park.lat,park.lon));
+        var parks = Parkings.find().observeChanges({
+          added: function(id, fields) {
+            var latlng = new google.maps.LatLng(fields.lat, fields.lon);
+            gmaps.placeMarker(id, latlng);
+            gmaps.reverseGeocode(id, latlng);
+          },
+          removed: function(id) {
+            gmaps.deleteMarker(id);
+          }
         });
       });
     }
