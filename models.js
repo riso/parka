@@ -29,7 +29,11 @@ Meteor.methods({
     Parkings.insert({
       _id: id,
       lat: options.lat,
-      lon: options.lon
+      lon: options.lon,
+      loc: {
+        type: "Point",
+        coordinates: [options.lon, options.lat]
+      }
     });
 
     return id;

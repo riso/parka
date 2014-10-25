@@ -4,8 +4,8 @@
 # but you can also edit it by hand.
 
 meteor-platform
-autopublish
 insecure
 mrt:googlemaps
 bootstrap
-
+less
+mizzao:bootstrap-3

@@ -1,12 +1,14 @@
 <head>
-  <title>Parka</title>
-  <script type="text/javascript"
-        src="http://maps.google.com/maps/api/js?v=3.13&key=AIzaSyB_czVzjbJnd6D0OtNtz-JlIxacxdbGOuA&sensor=false">
-            </script>
+<title>Parka</title>
+<script type="text/javascript"
+src="http://maps.google.com/maps/api/js?v=3.13&key=AIzaSyB_czVzjbJnd6D0OtNtz-JlIxacxdbGOuA&sensor=false">
+</script>
 </head>
 
 <body>  
+<div class="container-fluid map">
   {{> page}}
+</div>
 </body>
 
 <template name="page">
@@ -16,5 +18,37 @@
       {{error}}
     </div>
   {{/if}}
-  <div id="map-canvas"></div>
+  <div class="row map">
+    <div class="col-xs-6 map"><div id="map-canvas"></div></div>
+    <div class="col-xs-6">
+      <div class="row">
+        <div class="col-xs-12">
+          <h4>Shh! Your Parka knows secret parkings are available..</h4>
+          <ul>
+          {{#each parkings}}
+            <li>Parking available at: {{lat}}, {{lon}}</li>
+          {{/each}}
+          </ul>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-xs-12">
+          {{> details}}
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template name="details">
+<div class="details">
+  {{#if parking}}
+    {{#with parking}}
+      <span>Selected a parking at {{lat}}, {{lon}}</span>
+      <button class="btn btn-primary pick">Pick it!</button>
+    {{/with}}
+  {{else}}
+    <span>BOO! You have no parking selected!</span>
+  {{/if}}
+</div>
 </template>
