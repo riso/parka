@@ -9,10 +9,21 @@ if (Meteor.isClient) {
     }
   });
 
+  Tracker.autorun(function() {
+    var selected = Session.get("selected");
+    if (selected) {
+      var park = Parkings.findOne(selected);
+      if (park) gmaps.calcRoute(park.lat, park.lon);
+    }
+  });
+
   Template.registerHelper('parkingLocation', function(parking) {
     var loc = ParkingLocations.findOne({'parkingId': parking._id});
     if (!loc) return parking.lat + ', ' + parking.lon;
-    return loc.location;
+    if (!loc.transitInfo) return loc.location;
+    return loc.location + 
+      ', distance: ' + loc.transitInfo.distance +
+      'm, ETA: ' + loc.transitInfo.duration + 's'
   });
 
   Template.page.helpers({
@@ -22,32 +33,39 @@ if (Meteor.isClient) {
     parkings: function() {
       return Parkings.find();
     },
+    selected: function() {
+      if (this._id === Session.get("selected")) return "active";
+      return "";
+    }
+  });
+
+  Template.page.events({
+    'click .list-group-item': function() {
+      Session.set("selected", this._id);
+    }
   });
 
   Template.page.rendered = function() {
-    if (!Session.get('map'))
-      gmaps.initialize();
+    gmaps.initialize();
 
-
-    google.maps.event.addListener(gmaps.map, 'click', function(event) {
-      Meteor.call('addParking', {lat: event.latLng.lat(), lon: event.latLng.lng()},
-                  function(error, id) {
-                    gmaps.placeMarker(id, event.latLng);
-                  });
+    google.maps.event.addListener(gmaps.map, 'dblclick', function(event) {
+      Meteor.call('addParking', {lat: event.latLng.lat(), lon: event.latLng.lng()});
     });
 
     var self = this;
 
     if (!self.handle) {
       self.handle = Tracker.autorun(function() {
-        var parks = Parkings.find().observeChanges({
+        Parkings.find().observeChanges({
           added: function(id, fields) {
             var latlng = new google.maps.LatLng(fields.lat, fields.lon);
             gmaps.placeMarker(id, latlng);
             gmaps.reverseGeocode(id, latlng);
+            gmaps.zoomMap();
           },
           removed: function(id) {
             gmaps.deleteMarker(id);
+            gmaps.zoomMap();
           }
         });
       });
@@ -70,6 +88,7 @@ if (Meteor.isClient) {
 
 if (Meteor.isServer) {
   Meteor.startup(function () {
+    Parkings._ensureIndex({'loc': '2dsphere'});
   });
 
   Meteor.publish("parkings", function (lat, lon) {
