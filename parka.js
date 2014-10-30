@@ -2,6 +2,22 @@ if (Meteor.isClient) {
 
   ParkingLocations = new Mongo.Collection(null);
 
+  Parkings.find().observeChanges({
+    added: function(id, fields) {
+      var latlng = new google.maps.LatLng(fields.lat, fields.lon);
+      gmaps.placeMarker(id, latlng, fields.freshness);
+      gmaps.reverseGeocode(id, latlng);
+      gmaps.zoomMap();
+    },
+    removed: function(id) {
+      gmaps.deleteMarker(id);
+      gmaps.zoomMap();
+    },
+    changed: function(id, fields) {
+      gmaps.updateMarker(id, fields.freshness);
+    }
+  });
+
   Tracker.autorun(function() {
     var myPosition = Session.get("myPosition");
     if (myPosition) {
@@ -51,32 +67,6 @@ if (Meteor.isClient) {
     google.maps.event.addListener(gmaps.map, 'dblclick', function(event) {
       Meteor.call('addParking', {lat: event.latLng.lat(), lon: event.latLng.lng()});
     });
-
-    var self = this;
-
-    if (!self.handle) {
-      self.handle = Tracker.autorun(function() {
-        Parkings.find().observeChanges({
-          added: function(id, fields) {
-            var latlng = new google.maps.LatLng(fields.lat, fields.lon);
-            gmaps.placeMarker(id, latlng, fields.freshness);
-            gmaps.reverseGeocode(id, latlng);
-            gmaps.zoomMap();
-          },
-          removed: function(id) {
-            gmaps.deleteMarker(id);
-            gmaps.zoomMap();
-          },
-          changed: function(id, fields) {
-            gmaps.deleteMarker(id);
-            var latlng = new google.maps.LatLng(fields.lat, fields.lon);
-            gmaps.placeMarker(id, latlng, fields.freshness);
-            gmaps.reverseGeocode(id, latlng);
-            gmaps.zoomMap();
-          }
-        });
-      });
-    }
   }
 
   Template.details.helpers({
