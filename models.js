@@ -30,6 +30,7 @@ Meteor.methods({
       _id: id,
       lat: options.lat,
       lon: options.lon,
+      freshness: "fresh",
       loc: {
         type: "Point",
         coordinates: [options.lon, options.lat]

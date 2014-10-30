@@ -59,12 +59,19 @@ if (Meteor.isClient) {
         Parkings.find().observeChanges({
           added: function(id, fields) {
             var latlng = new google.maps.LatLng(fields.lat, fields.lon);
-            gmaps.placeMarker(id, latlng);
+            gmaps.placeMarker(id, latlng, fields.freshness);
             gmaps.reverseGeocode(id, latlng);
             gmaps.zoomMap();
           },
           removed: function(id) {
             gmaps.deleteMarker(id);
+            gmaps.zoomMap();
+          },
+          changed: function(id, fields) {
+            gmaps.deleteMarker(id);
+            var latlng = new google.maps.LatLng(fields.lat, fields.lon);
+            gmaps.placeMarker(id, latlng, fields.freshness);
+            gmaps.reverseGeocode(id, latlng);
             gmaps.zoomMap();
           }
         });
@@ -87,8 +94,15 @@ if (Meteor.isClient) {
 }
 
 if (Meteor.isServer) {
+
   Meteor.startup(function () {
     Parkings._ensureIndex({'loc': '2dsphere'});
+    Parkings.find().observeChanges({
+      added: function(id, fields) {
+        Meteor.setTimeout(function() {Parkings.update(id, {$set: {'freshness': 'medium'}});}, 60 * 1000);
+        Meteor.setTimeout(function() {Parkings.update(id, {$set: {'freshness': 'old'}});}, 5 * 60 * 1000);
+      }
+    });
   });
 
   Meteor.publish("parkings", function (lat, lon) {
