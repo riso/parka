@@ -5,9 +5,7 @@
 
 meteor-platform
 insecure
-mrt:googlemaps
-bootstrap
 less
-mizzao:bootstrap-3
-jeeeyul:moment-with-langs
+mdg:reload-on-resume
+mdg:geolocation
 

@@ -21,7 +21,7 @@ if (Meteor.isClient) {
   Tracker.autorun(function() {
     var myPosition = Session.get("myPosition");
     if (myPosition) {
-      Meteor.subscribe("parkings", myPosition.lat, myPosition.lon);
+      Meteor.subscribe("parkings", myPosition.lat, myPosition.lng);
     }
   });
 
@@ -64,6 +64,20 @@ if (Meteor.isClient) {
   Template.page.rendered = function() {
     gmaps.initialize();
 
+    Tracker.autorun(function() {
+      var latLng = Geolocation.latLng();
+      if (latLng) {
+        var myPosition = new google.maps.LatLng(latLng.lat, latLng.lng)
+        gmaps.centerMe(myPosition);
+        Session.set("myPosition", {lat: myPosition.lat(), lng: myPosition.lng()});
+      }
+    });
+    Tracker.autorun(function() {
+      var error = Geolocation.error();
+      if (error) {
+        Session.set("myPosition", {lat: 45.4627338,lng: 9.1777323});
+      }
+    });
     google.maps.event.addListener(gmaps.map, 'dblclick', function(event) {
       Meteor.call('addParking', {lat: event.latLng.lat(), lon: event.latLng.lng()});
     });
@@ -89,8 +103,13 @@ if (Meteor.isServer) {
     Parkings._ensureIndex({'loc': '2dsphere'});
     Parkings.find().observeChanges({
       added: function(id, fields) {
-        Meteor.setTimeout(function() {Parkings.update(id, {$set: {'freshness': 'medium'}});}, 60 * 1000);
-        Meteor.setTimeout(function() {Parkings.update(id, {$set: {'freshness': 'old'}});}, 5 * 60 * 1000);
+        if (!fields.freshness) Parkings.update(id, {$set: {'freshness': 'old'}});
+        if (fields.freshness === 'medium')
+          Meteor.setTimeout(function() {Parkings.update(id, {$set: {'freshness': 'old'}});}, 4 * 60 * 1000);
+        if (fields.freshness === 'fresh') {
+          Meteor.setTimeout(function() {Parkings.update(id, {$set: {'freshness': 'medium'}});}, 60 * 1000);
+          Meteor.setTimeout(function() {Parkings.update(id, {$set: {'freshness': 'old'}});}, 5 * 60 * 1000);
+        }
       }
     });
   });
