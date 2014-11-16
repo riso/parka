@@ -1,4 +1,3 @@
-
 Parkings = new Mongo.Collection("parkings");
 
 var NonEmptyString = Match.Where(function (x) {

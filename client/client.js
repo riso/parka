@@ -50,9 +50,8 @@ Template.page.rendered = function() {
 
   Parkings.find().observeChanges({
     added: function(id, fields) {
-      var latlng = new google.maps.LatLng(fields.lat, fields.lon);
-      gmaps.placeMarker(id, latlng, fields.freshness);
-      gmaps.reverseGeocode(id, latlng);
+      gmaps.placeMarker(id, fields);
+      gmaps.reverseGeocode(id, fields);
       gmaps.zoomMap();
     },
     removed: function(id) {
@@ -67,11 +66,10 @@ Template.page.rendered = function() {
   Tracker.autorun(function() {
     var latLng = Geolocation.latLng();
     if (latLng) {
-      var myPosition = new google.maps.LatLng(latLng.lat, latLng.lng);
-      gmaps.centerMe(myPosition);
+      gmaps.centerMe(latLng);
       Session.set("myPosition", {
-        lat: myPosition.lat(),
-        lng: myPosition.lng()
+        lat: latLng.lat,
+        lng: latLng.lng
       });
     }
   });
@@ -83,12 +81,6 @@ Template.page.rendered = function() {
         lng: 9.1777323
       });
     }
-  });
-  google.maps.event.addListener(gmaps.map, 'dblclick', function(event) {
-    Meteor.call('addParking', {
-      lat: event.latLng.lat(),
-      lon: event.latLng.lng()
-    });
   });
 }
 

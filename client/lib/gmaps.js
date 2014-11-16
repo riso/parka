@@ -7,6 +7,49 @@ gmaps = {
   markers: [],
   browserSupport: true,
 
+  // gmaps js api and cordova plugin wrapper
+
+  getMapType: function() {
+    if (!Meteor.isCordova)
+      return google.maps.MapTypeId.ROADMAP;
+    return plugin.google.maps.MapTypeId.ROADMAP;
+  },
+  // map(domnode, mapOptions)
+  buildMap: function(node, options) {
+    if (!Meteor.isCordova) 
+      return new google.maps.Map(node, options);  
+    var zoom = options.zoom;
+    var map = plugin.google.maps.Map.getMap({'mapType': gmaps.getMapType()});
+    map.setDiv(node);
+    map.setZoom(zoom);
+    return map;
+  },
+  // map.setCenter(latLng)
+  // latLng(lat, lng)
+  // lat = latlng.lat()
+  // lng = latlng.lng()
+  // marker(latLng, map, icon)
+  // marker.setIcon(icon)
+  // marker.setPosition(lagLng)
+  // marker.setMap(map)
+  // latlng = marker.getPosition()
+  // event.addListener(object, event, callback)
+  // geocoder
+  // geocoder.geocode(latlng, callback)
+  // v2: latlngbounds
+  // v2: latlngbounds(latlng, latlng)
+  // v2: latlngbounds.extend(latlng)
+  // v2: latlng = latlngbounds.getNorthWest()
+  // v2: latlng = latlngbounds.getNorthWest()
+  // v2: map.fitBounds(latlngbounds)
+  // v3: directionsService.route(request, callback(response, status))
+  // v3: directionsDisplay.setDirections(response)
+  // v3: directionsResponse
+  // v3: directionsStatus
+  // v3: directionsRenderer(directionOptions)
+  // v3: directionsService
+  // v3: directionsDisplay.setMap(map)
+
   getIcon: function(freshness) {
     var icon = 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
     if (freshness === 'old') {
@@ -18,10 +61,11 @@ gmaps = {
     return icon;
   },
 
-  placeMarker: function(id, location, freshness) {
-    var icon = gmaps.getIcon(freshness);
+  placeMarker: function(id, fields) {
+    var latlng = new google.maps.LatLng(fields.lat, fields.lon);
+    var icon = gmaps.getIcon(fields.freshness);
     var marker = new google.maps.Marker({
-      position: location,
+      position: latlng,
       map: gmaps.map,
       icon: icon
     });
@@ -40,8 +84,9 @@ gmaps = {
     });
   },
 
-  reverseGeocode: function(parkingId, location) {
-    gmaps.geocoder.geocode({'latLng': location}, function(results, status) {
+  reverseGeocode: function(parkingId, fields) {
+    var latlng = new google.maps.LatLng(fields.lat, fields.lon);
+    gmaps.geocoder.geocode({'latLng': latlng}, function(results, status) {
       if (status == google.maps.GeocoderStatus.OK) {
         if (results[0]) {
           ParkingLocations.insert({
@@ -57,10 +102,13 @@ gmaps = {
     });
   },
 
-  centerMe: function(position) {
+  centerMe: function(latLng) {
     var image = '/car.png'
-    if (gmaps.me) gmaps.me.setMap(null);
-    gmaps.me = new google.maps.Marker({position: position, map: gmaps.map, icon: image});
+    var position = new google.maps.LatLng(latLng.lat, latLng.lng);
+    if (gmaps.me) gmaps.me.setPosition(position);
+    else {
+      gmaps.me = new google.maps.Marker({position: position, map: gmaps.map, icon: image});
+    }
     gmaps.map.setCenter(position);
   },
 
@@ -153,6 +201,8 @@ gmaps = {
       mapTypeId: google.maps.MapTypeId.ROADMAP
     };
 
+    gmaps.map = gmaps.buildMap(document.getElementById("map-canvas"), mapOptions); 
+
     gmaps.geocoder = new google.maps.Geocoder();
     var directionOptions = {
       suppressMarkers: true,
@@ -161,10 +211,17 @@ gmaps = {
 
     gmaps.directionsDisplay = new google.maps.DirectionsRenderer(directionOptions);
     gmaps.directionsService = new google.maps.DirectionsService();
-    gmaps.map = new google.maps.Map(document.getElementById("map-canvas"), mapOptions); 
     var milan = new google.maps.LatLng(45.4627338,9.1777323);
     gmaps.map.setCenter(milan);
     gmaps.directionsDisplay.setMap(gmaps.map);
+
+    google.maps.event.addListener(gmaps.map, 'dblclick', function(event) {
+      Meteor.call('addParking', {
+        lat: event.latLng.lat(),
+        lon: event.latLng.lng()
+      });
+    });
+
     Session.set("map", true);
   }
 
