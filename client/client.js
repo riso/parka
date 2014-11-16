@@ -52,11 +52,11 @@ Template.page.rendered = function() {
     added: function(id, fields) {
       gmaps.placeMarker(id, fields);
       gmaps.reverseGeocode(id, fields);
-      gmaps.zoomMap();
+      // TODO readd gmaps.zoomMap();
     },
     removed: function(id) {
       gmaps.deleteMarker(id);
-      gmaps.zoomMap();
+      // TODO readd gmaps.zoomMap();
     },
     changed: function(id, fields) {
       gmaps.updateMarker(id, fields.freshness);

@@ -14,28 +14,92 @@ gmaps = {
       return google.maps.MapTypeId.ROADMAP;
     return plugin.google.maps.MapTypeId.ROADMAP;
   },
+  getAddEvent: function() {
+    if (!Meteor.isCordova)
+      return 'dblclick';
+    return plugin.google.maps.event.MAP_LONG_CLICK;
+  },
+  getSelectEvent: function() {
+    if (!Meteor.isCordova)
+      return 'click';
+    return plugin.google.maps.event.MAP_CLICK;
+  },
+  getFormattedAddress: function(result) {
+    if (!Meteor.isCordova)
+      return result.formatted_address;
+    return _.compact([
+      result.subThoroughfare || "",
+      result.thoroughfare || "",
+      result.locality || "",
+      result.adminArea || "",
+      result.postalCode || "",
+      result.country || "" ]).join(", "); 
+  },
   // map(domnode, mapOptions)
-  buildMap: function(node, options) {
+  getMap: function(node, options) {
     if (!Meteor.isCordova) 
       return new google.maps.Map(node, options);  
     var zoom = options.zoom;
-    var map = plugin.google.maps.Map.getMap({'mapType': gmaps.getMapType()});
+    var map = plugin.google.maps.Map.getMap({'mapType': options.mapTypeId});
     map.setDiv(node);
     map.setZoom(zoom);
     return map;
   },
-  // map.setCenter(latLng)
+  // map.setCenter(latLng) ~ not needed, same API
   // latLng(lat, lng)
+  getLatLng: function(lat, lng) {
+    if (!Meteor.isCordova)
+      return new google.maps.LatLng(lat, lng);
+    return new plugin.google.maps.LatLng(lat, lng);
+  },
   // lat = latlng.lat()
+  getLat: function(latLng) {
+    if (!Meteor.isCordova)
+      return latLng.lat();
+    return latLng.lat;
+  },
   // lng = latlng.lng()
+  getLng: function(latLng) {
+    if (!Meteor.isCordova)
+      return latLng.lng();
+    return latLng.lng;
+  },
   // marker(latLng, map, icon)
-  // marker.setIcon(icon)
-  // marker.setPosition(lagLng)
-  // marker.setMap(map)
+  getMarker: function(latLng, map, icon, callback) {
+    if (!Meteor.isCordova)
+      return callback(new google.maps.Marker({position: latLng, map: map, icon: icon}));
+    map.addMarker({position: latLng, icon: icon}, callback);
+  },
   // latlng = marker.getPosition()
+  getMarkerPosition: function(marker, callback) {
+    if (!Meteor.isCordova)
+      return callback(marker.getPosition());
+    return marker.getPosition(callback);
+  },
+  // marker.setIcon(icon)
+  // marker.setPosition(lagLng) ~ not needed, same API
+  // marker.setMap(map)
   // event.addListener(object, event, callback)
+  addListener: function(map, event, callback){
+    if (!Meteor.isCordova)
+      return google.maps.event.addListener(map, event, function(evt) {callback(evt.latLng);});
+    return map.on(event, callback);
+  },
   // geocoder
+  getGeocoder: function() {
+    if (!Meteor.isCordova)
+      return new google.maps.Geocoder(); 
+    return plugin.google.maps.Geocoder;
+  },
   // geocoder.geocode(latlng, callback)
+  geocode: function(latLng, callback) {
+    if (!Meteor.isCordova)
+      return gmaps.geocoder.geocode({'latLng': latLng}, function(results, status) {
+        if (status !== google.maps.GeocoderStatus.OK) return callback([]);
+        callback(results);
+      });
+      return gmaps.geocoder.geocode({'position': latLng}, callback);
+  },
   // v2: latlngbounds
   // v2: latlngbounds(latlng, latlng)
   // v2: latlngbounds.extend(latlng)
@@ -44,11 +108,33 @@ gmaps = {
   // v2: map.fitBounds(latlngbounds)
   // v3: directionsService.route(request, callback(response, status))
   // v3: directionsDisplay.setDirections(response)
+  setDirections: function(response) {
+    if (!Meteor.isCordova)
+      return gmaps.directionsDisplay.setDirections(response);
+    var route = response.routes[0];
+    var points = _.map(route.legs[0].steps, function(step) {
+      return new plugin.google.maps.LatLng(step.start_location.lat(), step.start_location.lng());
+    });
+    return gmaps.map.addPolyline({points: points, 'color': '#000', 'width': 2, 'geodesic': false});
+  },
   // v3: directionsResponse
   // v3: directionsStatus
   // v3: directionsRenderer(directionOptions)
-  // v3: directionsService
+  getDirectionsRenderer: function(options) {
+    if (!Meteor.isCordova)
+      return new google.maps.DirectionsRenderer(options);
+    return null;
+  },
   // v3: directionsDisplay.setMap(map)
+  setDirectionsRendererMap: function(map) {
+    if (!Meteor.isCordova)
+      return gmaps.directionsDisplay.setMap(map);
+    return;
+  },
+  // v3: directionsService
+  getDirectionsService: function() {
+    return new google.maps.DirectionsService();
+  },
 
   getIcon: function(freshness) {
     var icon = 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
@@ -62,17 +148,14 @@ gmaps = {
   },
 
   placeMarker: function(id, fields) {
-    var latlng = new google.maps.LatLng(fields.lat, fields.lon);
+    var latlng = gmaps.getLatLng(fields.lat, fields.lon);
     var icon = gmaps.getIcon(fields.freshness);
-    var marker = new google.maps.Marker({
-      position: latlng,
-      map: gmaps.map,
-      icon: icon
-    });
-    marker.parkingId = id;
-    gmaps.markers.push(marker);
-    google.maps.event.addListener(marker, 'click', function() {
-      Session.set("selected", id);
+    gmaps.getMarker(latlng, gmaps.map, icon, function(marker){
+      marker.parkingId = id;
+      gmaps.markers.push(marker);
+      gmaps.addListener(marker, gmaps.getSelectEvent(), function() {
+        Session.set("selected", id);
+      });
     });
   },
 
@@ -85,13 +168,13 @@ gmaps = {
   },
 
   reverseGeocode: function(parkingId, fields) {
-    var latlng = new google.maps.LatLng(fields.lat, fields.lon);
-    gmaps.geocoder.geocode({'latLng': latlng}, function(results, status) {
-      if (status == google.maps.GeocoderStatus.OK) {
+    var latlng = gmaps.getLatLng(fields.lat, fields.lon);
+    gmaps.geocode(latlng, function(results) {
+      if (results.length) {
         if (results[0]) {
           ParkingLocations.insert({
             parkingId: parkingId, 
-            location: results[0].formatted_address
+            location: gmaps.getFormattedAddress(results[0])
           });
         } else {
           return;
@@ -104,10 +187,13 @@ gmaps = {
 
   centerMe: function(latLng) {
     var image = '/car.png'
-    var position = new google.maps.LatLng(latLng.lat, latLng.lng);
-    if (gmaps.me) gmaps.me.setPosition(position);
-    else {
-      gmaps.me = new google.maps.Marker({position: position, map: gmaps.map, icon: image});
+    var position = gmaps.getLatLng(latLng.lat, latLng.lng);
+    if (gmaps.me) {
+      gmaps.me.setPosition(position);
+    } else {
+      gmaps.getMarker(position, gmaps.map, image, function(marker) {
+        gmaps.me = marker;
+      });
     }
     gmaps.map.setCenter(position);
   },
@@ -144,7 +230,7 @@ gmaps = {
 
     if (gmaps.me) {
       var myPos = gmaps.me.getPosition();
-      bounds.extend(myPos);
+      bounds.extend(myPos); 
       var ne = bounds.getNorthEast();
       var sw = bounds.getSouthWest();
       var newSWLat, newSWLon, newNELat, newSWLon;
@@ -174,23 +260,26 @@ gmaps = {
   calcRoute: function(lat, lon) {
     if (!gmaps.me) return;
     var destination = new google.maps.LatLng(lat, lon);
-    var request = {
-      origin: gmaps.me.getPosition(),
-      destination: destination,
-      travelMode: google.maps.TravelMode.DRIVING
-    };
-    gmaps.directionsService.route(request, function(response, status) {
-      if (status == google.maps.DirectionsStatus.OK) {
-        gmaps.directionsDisplay.setDirections(response);
-        var route = response.routes[0];
-        var transitInfo = _.reduce(route.legs, function(acc, leg) {
-          return {
-            distance: acc.distance + leg.distance.value, 
-            duration: acc.distance + leg.duration.value
-          };
-        }, {distance: 0, duration: 0});
-        ParkingLocations.update({parkingId: Session.get("selected")}, {$set: {'transitInfo': transitInfo}});
-      }
+    var origin;
+    gmaps.getMarkerPosition(gmaps.me, function(latlng){
+      var request = {
+        origin: new google.maps.LatLng(gmaps.getLat(latlng), gmaps.getLng(latlng)),
+        destination: destination,
+        travelMode: google.maps.TravelMode.DRIVING
+      };
+      gmaps.directionsService.route(request, function(response, status) {
+        if (status == google.maps.DirectionsStatus.OK) {
+          gmaps.setDirections(response);
+          var route = response.routes[0];
+          var transitInfo = _.reduce(route.legs, function(acc, leg) {
+            return {
+              distance: acc.distance + leg.distance.value, 
+              duration: acc.distance + leg.duration.value
+            };
+          }, {distance: 0, duration: 0});
+          ParkingLocations.update({parkingId: Session.get("selected")}, {$set: {'transitInfo': transitInfo}});
+        }
+      });
     });
   },
 
@@ -198,27 +287,29 @@ gmaps = {
 
     var mapOptions = {
       zoom: 17,
-      mapTypeId: google.maps.MapTypeId.ROADMAP
+      mapTypeId: gmaps.getMapType()
     };
 
-    gmaps.map = gmaps.buildMap(document.getElementById("map-canvas"), mapOptions); 
+    gmaps.map = gmaps.getMap(document.getElementById("map-canvas"), mapOptions); 
 
-    gmaps.geocoder = new google.maps.Geocoder();
+    gmaps.geocoder = gmaps.getGeocoder();
+
+    var milan = gmaps.getLatLng(45.4627338,9.1777323);
+    gmaps.map.setCenter(milan);
+
     var directionOptions = {
       suppressMarkers: true,
       preserveViewport: true
     }
 
-    gmaps.directionsDisplay = new google.maps.DirectionsRenderer(directionOptions);
-    gmaps.directionsService = new google.maps.DirectionsService();
-    var milan = new google.maps.LatLng(45.4627338,9.1777323);
-    gmaps.map.setCenter(milan);
-    gmaps.directionsDisplay.setMap(gmaps.map);
+    gmaps.directionsService = gmaps.getDirectionsService();
+    gmaps.directionsDisplay = gmaps.getDirectionsRenderer(directionOptions);
+    gmaps.setDirectionsRendererMap(gmaps.map);
 
-    google.maps.event.addListener(gmaps.map, 'dblclick', function(event) {
+    gmaps.addListener(gmaps.map, gmaps.getAddEvent(), function(latlng) {
       Meteor.call('addParking', {
-        lat: event.latLng.lat(),
-        lon: event.latLng.lng()
+        lat: gmaps.getLat(latLng),
+        lon: gmaps.getLng(latLng)
       });
     });
 
