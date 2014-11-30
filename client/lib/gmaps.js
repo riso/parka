@@ -5,6 +5,7 @@ gmaps = {
   directionsDisplay: null,
   me: null,
   markers: [],
+  route: null,
   browserSupport: true,
 
   // gmaps js api and cordova plugin wrapper
@@ -33,14 +34,17 @@ gmaps = {
       result.locality || "",
       result.adminArea || "",
       result.postalCode || "",
-      result.country || "" ]).join(", "); 
+      result.country || ""
+    ]).join(", ");
   },
   // map(domnode, mapOptions)
   getMap: function(node, options) {
-    if (!Meteor.isCordova) 
-      return new google.maps.Map(node, options);  
+    if (!Meteor.isCordova)
+      return new google.maps.Map(node, options);
     var zoom = options.zoom;
-    var map = plugin.google.maps.Map.getMap({'mapType': options.mapTypeId});
+    var map = plugin.google.maps.Map.getMap({
+      'mapType': options.mapTypeId
+    });
     map.setDiv(node);
     map.setZoom(zoom);
     return map;
@@ -67,8 +71,15 @@ gmaps = {
   // marker(latLng, map, icon)
   getMarker: function(latLng, map, icon, callback) {
     if (!Meteor.isCordova)
-      return callback(new google.maps.Marker({position: latLng, map: map, icon: icon}));
-    map.addMarker({position: latLng, icon: icon}, callback);
+      return callback(new google.maps.Marker({
+        position: latLng,
+        map: map,
+        icon: icon
+      }));
+    map.addMarker({
+      position: latLng,
+      icon: icon
+    }, callback);
   },
   // latlng = marker.getPosition()
   getMarkerPosition: function(marker, callback) {
@@ -79,26 +90,43 @@ gmaps = {
   // marker.setIcon(icon)
   // marker.setPosition(lagLng) ~ not needed, same API
   // marker.setMap(map)
-  // event.addListener(object, event, callback)
-  addListener: function(map, event, callback){
+  removeMarker: function(marker) {
     if (!Meteor.isCordova)
-      return google.maps.event.addListener(map, event, function(evt) {callback(evt.latLng);});
+      return marker.setMap(null);
+    return marker.remove();
+  },
+  // event.addListener(object, event, callback)
+  addListener: function(map, event, callback) {
+    if (!Meteor.isCordova) {
+      return google.maps.event.addListener(map, event, function(evt) {
+        callback(evt.latLng);
+      });
+    }
     return map.on(event, callback);
+  },
+  addMarkerListener: function(marker, event, callback) {
+    if (!Meteor.isCordova)
+      return google.maps.event.addListener(marker, event, callback);
+    return marker.addEventListener(event, callback);
   },
   // geocoder
   getGeocoder: function() {
     if (!Meteor.isCordova)
-      return new google.maps.Geocoder(); 
+      return new google.maps.Geocoder();
     return plugin.google.maps.Geocoder;
   },
   // geocoder.geocode(latlng, callback)
   geocode: function(latLng, callback) {
     if (!Meteor.isCordova)
-      return gmaps.geocoder.geocode({'latLng': latLng}, function(results, status) {
+      return gmaps.geocoder.geocode({
+        'latLng': latLng
+      }, function(results, status) {
         if (status !== google.maps.GeocoderStatus.OK) return callback([]);
         callback(results);
       });
-      return gmaps.geocoder.geocode({'position': latLng}, callback);
+    return gmaps.geocoder.geocode({
+      'position': latLng
+    }, callback);
   },
   // v2: latlngbounds
   // v2: latlngbounds(latlng, latlng)
@@ -112,10 +140,19 @@ gmaps = {
     if (!Meteor.isCordova)
       return gmaps.directionsDisplay.setDirections(response);
     var route = response.routes[0];
-    var points = _.map(route.legs[0].steps, function(step) {
-      return new plugin.google.maps.LatLng(step.start_location.lat(), step.start_location.lng());
-    });
-    return gmaps.map.addPolyline({points: points, 'color': '#000', 'width': 2, 'geodesic': false});
+   var points = _.map(route.overview_path, function(latLng) {
+     return new plugin.google.maps.LatLng(latLng.lat(), latLng.lng());
+   });
+    if (gmaps.route) gmaps.route.remove();
+    return gmaps.map.addPolyline({
+        points: points,
+        'color': '#000',
+        'width': 2,
+        'geodesic': false
+      },
+      function(route) {
+        gmaps.route = route;
+      });
   },
   // v3: directionsResponse
   // v3: directionsStatus
@@ -150,10 +187,10 @@ gmaps = {
   placeMarker: function(id, fields) {
     var latlng = gmaps.getLatLng(fields.lat, fields.lon);
     var icon = gmaps.getIcon(fields.freshness);
-    gmaps.getMarker(latlng, gmaps.map, icon, function(marker){
+    gmaps.getMarker(latlng, gmaps.map, icon, function(marker) {
       marker.parkingId = id;
       gmaps.markers.push(marker);
-      gmaps.addListener(marker, gmaps.getSelectEvent(), function() {
+      gmaps.addMarkerListener(marker, gmaps.getSelectEvent(), function() {
         Session.set("selected", id);
       });
     });
@@ -173,7 +210,7 @@ gmaps = {
       if (results.length) {
         if (results[0]) {
           ParkingLocations.insert({
-            parkingId: parkingId, 
+            parkingId: parkingId,
             location: gmaps.getFormattedAddress(results[0])
           });
         } else {
@@ -204,37 +241,43 @@ gmaps = {
     } else {
       Session.set("error", "Upgrade browser please");
     }
-    var milan = new google.maps.LatLng(45.4627338,9.1777323);
+    var milan = new google.maps.LatLng(45.4627338, 9.1777323);
     gmaps.map.setCenter(milan);
   },
 
   deleteMarker: function(id) {
     gmaps.markers = _.reject(gmaps.markers, function(marker) {
       if (marker.parkingId === id) {
-        marker.setMap(null);
+        gmaps.removeMarker(marker);
         return marker;
       }
     });
   },
 
   deleteMarkers: function() {
-    _.each(gmaps.markers, function(marker) {marker.setMap(null);});
+    _.each(gmaps.markers, function(marker) {
+      gmaps.deleteMarker(marker);
+    });
     gmaps.markers = [];
   },
 
   zoomMap: function() {
-    var markerPositions = _.map(gmaps.markers, function(marker) { return marker.getPosition(); });
+    var markerPositions = _.map(gmaps.markers, function(marker) {
+      return marker.getPosition();
+    });
 
     var bounds = new google.maps.LatLngBounds();
-    _.each(markerPositions, function(markerPosition) {bounds.extend(markerPosition);});
+    _.each(markerPositions, function(markerPosition) {
+      bounds.extend(markerPosition);
+    });
 
     if (gmaps.me) {
       var myPos = gmaps.me.getPosition();
-      bounds.extend(myPos); 
+      bounds.extend(myPos);
       var ne = bounds.getNorthEast();
       var sw = bounds.getSouthWest();
       var newSWLat, newSWLon, newNELat, newSWLon;
-      if (Math.abs(myPos.lat() - ne.lat()) > Math.abs(myPos.lat() - sw.lat())){
+      if (Math.abs(myPos.lat() - ne.lat()) > Math.abs(myPos.lat() - sw.lat())) {
         newNELat = ne.lat();
         newSWLat = myPos.lat() - Math.abs(myPos.lat() - ne.lat());
       } else {
@@ -242,7 +285,7 @@ gmaps = {
         newNELat = myPos.lat() + Math.abs(myPos.lat() - sw.lat());
       }
 
-      if (Math.abs(myPos.lng() - ne.lng()) > Math.abs(myPos.lng() - sw.lng())){
+      if (Math.abs(myPos.lng() - ne.lng()) > Math.abs(myPos.lng() - sw.lng())) {
         newNELon = ne.lng();
         newSWLon = myPos.lng() - Math.abs(myPos.lng() - ne.lng());
       } else {
@@ -261,7 +304,7 @@ gmaps = {
     if (!gmaps.me) return;
     var destination = new google.maps.LatLng(lat, lon);
     var origin;
-    gmaps.getMarkerPosition(gmaps.me, function(latlng){
+    gmaps.getMarkerPosition(gmaps.me, function(latlng) {
       var request = {
         origin: new google.maps.LatLng(gmaps.getLat(latlng), gmaps.getLng(latlng)),
         destination: destination,
@@ -273,11 +316,20 @@ gmaps = {
           var route = response.routes[0];
           var transitInfo = _.reduce(route.legs, function(acc, leg) {
             return {
-              distance: acc.distance + leg.distance.value, 
+              distance: acc.distance + leg.distance.value,
               duration: acc.distance + leg.duration.value
             };
-          }, {distance: 0, duration: 0});
-          ParkingLocations.update({parkingId: Session.get("selected")}, {$set: {'transitInfo': transitInfo}});
+          }, {
+            distance: 0,
+            duration: 0
+          });
+          ParkingLocations.update({
+            parkingId: Session.get("selected")
+          }, {
+            $set: {
+              'transitInfo': transitInfo
+            }
+          });
         }
       });
     });
@@ -290,11 +342,11 @@ gmaps = {
       mapTypeId: gmaps.getMapType()
     };
 
-    gmaps.map = gmaps.getMap(document.getElementById("map-canvas"), mapOptions); 
+    gmaps.map = gmaps.getMap(document.getElementById("map-canvas"), mapOptions);
 
     gmaps.geocoder = gmaps.getGeocoder();
 
-    var milan = gmaps.getLatLng(45.4627338,9.1777323);
+    var milan = gmaps.getLatLng(45.4627338, 9.1777323);
     gmaps.map.setCenter(milan);
 
     var directionOptions = {
@@ -306,7 +358,7 @@ gmaps = {
     gmaps.directionsDisplay = gmaps.getDirectionsRenderer(directionOptions);
     gmaps.setDirectionsRendererMap(gmaps.map);
 
-    gmaps.addListener(gmaps.map, gmaps.getAddEvent(), function(latlng) {
+    gmaps.addListener(gmaps.map, gmaps.getAddEvent(), function(latLng) {
       Meteor.call('addParking', {
         lat: gmaps.getLat(latLng),
         lon: gmaps.getLng(latLng)
@@ -317,4 +369,3 @@ gmaps = {
   }
 
 }
-
