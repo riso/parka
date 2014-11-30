@@ -43,7 +43,11 @@ gmaps = {
       return new google.maps.Map(node, options);
     var zoom = options.zoom;
     var map = plugin.google.maps.Map.getMap({
-      'mapType': options.mapTypeId
+      'mapType': options.mapTypeId,
+      'controls': {
+        'compass': false,
+        'zoom': false
+      }
     });
     map.setDiv(node);
     map.setZoom(zoom);
@@ -223,7 +227,7 @@ gmaps = {
   },
 
   centerMe: function(latLng) {
-    var image = '/car.png'
+    var image = Meteor.isCordova ? 'www/application/car.png' : '/car.png';
     var position = gmaps.getLatLng(latLng.lat, latLng.lng);
     if (gmaps.me) {
       gmaps.me.setPosition(position);
