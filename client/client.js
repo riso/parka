@@ -20,10 +20,15 @@ Template.registerHelper('parkingLocation', function(parking) {
     'parkingId': parking._id
   });
   if (!loc) return parking.lat + ', ' + parking.lon;
-  if (!loc.transitInfo) return loc.location;
-  return loc.location +
-    ', distance: ' + loc.transitInfo.distance +
-    'm, ETA: ' + loc.transitInfo.duration + 's'
+  return loc.location;
+});
+
+Template.registerHelper('eta', function(parking) {
+  var loc = ParkingLocations.findOne({
+    'parkingId': parking._id
+  });
+  if (!loc || !loc.transitInfo) return null;
+  return Math.round(loc.transitInfo.duration / 60);
 });
 
 Template.page.helpers({

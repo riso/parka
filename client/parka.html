@@ -1,54 +1,66 @@
 <head>
-<link rel="shortcut icon" type="image/png" href="/car.png" />
-<title>Parka</title>
-<script type="text/javascript"
-src="http://maps.google.com/maps/api/js?v=3.13&key=AIzaSyB_czVzjbJnd6D0OtNtz-JlIxacxdbGOuA&sensor=false">
-</script>
+  <link rel="shortcut icon" type="image/png" href="/car.png" />
+  <title>Parka</title>
+  <script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.13&key=AIzaSyB_czVzjbJnd6D0OtNtz-JlIxacxdbGOuA&sensor=false">
+  </script>
 </head>
 
-<body>  
-<div class="container-fluid map">
-  {{> page}}
-</div>
+<body>
+  <div class="container-fluid map">
+    {{> page}}
+  </div>
 </body>
 
 <template name="page">
-{{#if error}}
-<div class="alert alert-error alert-danger alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert">&times;</button>
-  {{error}}
-</div>
-{{/if}}
-<div class="row map">
-  <div class="col-md-6 col-sm-12 map"><div id="map-canvas"></div></div>
-  <div class="col-md-6 col-sm-4">
-    <div class="row">
-      <div class="col-xs-12">
-        <h2>Shh! Your Parka knows secret parkings are available..</h2>
-        <div class="list-group" >
-          {{#each parkings}}
-          <a href="#" class="list-group-item {{selected}}">{{parkingLocation this}}</a>
-          {{/each}}
+  {{#if error}}
+  <div class="alert alert-error alert-danger alert-dismissable">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    {{error}}
+  </div>
+  {{/if}}
+  <div class="row map">
+    <div class="col-md-6 col-sm-12 map">
+      <div id="map-canvas"></div>
+    </div>
+    <div class="col-md-6 col-sm-4 parkings-info">
+      <div class="row">
+        <div class="col-xs-12">
+          <h2>Shh! Your Parka knows secret parkings are available..</h2>
+          <div class="list-group">
+            {{#each parkings}}
+            <a href="#" class="list-group-item {{selected}}">
+              {{> parkingInfo}}
+            </a> {{/each}}
+          </div>
+        </div>
+        <div class="col-xs-12 mobile-footer">
+          {{> details}}
         </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col-xs-12">
-        {{> details}}
-      </div>
-    </div>
   </div>
-</div></template>
+</template>
 
 <template name="details">
-<div class="details">
-  {{#if parking}}
-  {{#with parking}}
-  <span>Selected a parking at {{parkingLocation this}}</span>
-  <button class="btn btn-primary pick">Pick it!</button>
-  {{/with}}
-  {{else}}
-  <span>BOO! You have no parking selected!</span>
+  <div class="panel details">
+    {{#if parking}} {{#with parking}}
+    <div class="row parking-info">
+      <div class="col-xs-9 parking-location">
+        {{> parkingInfo}}
+      </div>
+      <div class="col-xs-3 parking-controls">
+        <button class="btn btn-primary btn-sm pull-right">Pick it!</button>
+      </div>
+    </div>
+    {{/with}} {{else}}
+    <span>Select a parking and pick it!</span> {{/if}}
+  </div>
+</template>
+
+<template name="parkingInfo">
+  <div>{{parkingLocation this}}</div>
+  {{#if eta this}}
+  <div class="eta"><small>Distance: <strong>~{{eta this}}</strong> mins</small>
+  </div>
   {{/if}}
-</div>
 </template>

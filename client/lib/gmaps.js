@@ -26,8 +26,12 @@ gmaps = {
     return plugin.google.maps.event.MAP_CLICK;
   },
   getFormattedAddress: function(result) {
-    if (!Meteor.isCordova)
-      return result.formatted_address;
+    if (!Meteor.isCordova) {
+      var comp = _.find(result.address_components, function(component) {
+        return component.types[0] === 'route';
+      });
+      return comp.short_name;
+    }
     return _.compact([
       result.subThoroughfare || "",
       result.thoroughfare || "",
@@ -144,9 +148,9 @@ gmaps = {
     if (!Meteor.isCordova)
       return gmaps.directionsDisplay.setDirections(response);
     var route = response.routes[0];
-   var points = _.map(route.overview_path, function(latLng) {
-     return new plugin.google.maps.LatLng(latLng.lat(), latLng.lng());
-   });
+    var points = _.map(route.overview_path, function(latLng) {
+      return new plugin.google.maps.LatLng(latLng.lat(), latLng.lng());
+    });
     if (gmaps.route) gmaps.route.remove();
     return gmaps.map.addPolyline({
         points: points,
