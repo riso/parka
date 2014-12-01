@@ -50,7 +50,8 @@ gmaps = {
       'mapType': options.mapTypeId,
       'controls': {
         'compass': false,
-        'zoom': false
+        'zoom': false,
+        'myLocationButton': true
       }
     });
     map.setDiv(node);
@@ -240,7 +241,6 @@ gmaps = {
         gmaps.me = marker;
       });
     }
-    gmaps.map.setCenter(position);
   },
 
   noGeoLoc: function() {

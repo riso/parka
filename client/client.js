@@ -51,6 +51,7 @@ Template.page.events({
 });
 
 Template.page.rendered = function() {
+  var initialized = false;
   gmaps.initialize();
 
   Parkings.find().observeChanges({
@@ -72,6 +73,10 @@ Template.page.rendered = function() {
     var latLng = Geolocation.latLng();
     if (latLng) {
       gmaps.centerMe(latLng);
+      if (!initialized) {
+        gmaps.map.setCenter(latLng);
+        initialized = true;
+      }
       Session.set("myPosition", {
         lat: latLng.lat,
         lng: latLng.lng
