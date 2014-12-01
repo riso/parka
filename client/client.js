@@ -31,6 +31,10 @@ Template.registerHelper('eta', function(parking) {
   return Math.round(loc.transitInfo.duration / 60);
 });
 
+Template.registerHelper('isCordova', function() {
+  return Meteor.isCordova;
+});
+
 Template.page.helpers({
   error: function() {
     return Session.get("error");

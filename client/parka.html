@@ -20,7 +20,13 @@
   {{/if}}
   <div class="row map">
     <div class="col-md-6 col-sm-12 map">
-      <div id="map-canvas"></div>
+      <div id="map-canvas">
+        {{#if isCordova}}
+        <div class="col-xs-12 mobile-footer">
+          {{> details}}
+        </div>
+        {{/if}}
+      </div>
     </div>
     <div class="col-md-6 col-sm-4 parkings-info">
       <div class="row">
@@ -33,9 +39,11 @@
             </a> {{/each}}
           </div>
         </div>
+        {{#unless isCordova}}
         <div class="col-xs-12 mobile-footer">
           {{> details}}
         </div>
+        {{/unless}}
       </div>
     </div>
   </div>
