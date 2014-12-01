@@ -106,6 +106,15 @@ Template.details.helpers({
 
 Template.details.events({
   'click .pick': function() {
+    var park = Parkings.findOne(Session.get("selected"));
     Parkings.remove(Session.get("selected"));
+    if (Meteor.isCordova) {
+      var myPosition = Session.get("myPosition");
+      plugin.google.maps.external.launchNavigation({
+        'from': gmaps.getLatLng(myPosition.lat, myPosition.lng),
+        'to': gmaps.getLatLng(park.lat, park.lon),
+        'travelMode': 'driving'
+      });
+    };
   }
 });
