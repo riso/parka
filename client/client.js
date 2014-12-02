@@ -1,4 +1,5 @@
 ParkingLocations = new Mongo.Collection(null);
+Meteor.subscribe("directory");
 
 Tracker.autorun(function() {
   var myPosition = Session.get("myPosition");
@@ -122,6 +123,7 @@ Template.parkingInfo.helpers({
   sharer: function(parking) {
     var sharer = Meteor.users.findOne(parking.userId);
     if (!sharer) return null;
-    return sharer.profile.name;
+    if (sharer.profile) return sharer.profile.name;
+    return sharer.emails[0].address;
   }
 });
