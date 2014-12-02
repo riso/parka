@@ -90,7 +90,7 @@ Template.details.helpers({
 });
 
 Template.details.events({
-  'click .pick': function() {
+  'click .pick, touchend .pick': function() {
     var park = Parkings.findOne(Session.get("selected"));
     Parkings.remove(Session.get("selected"));
     if (Meteor.isCordova) {

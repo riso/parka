@@ -32,14 +32,7 @@ gmaps = {
       });
       return comp.short_name;
     }
-    return _.compact([
-      result.subThoroughfare || "",
-      result.thoroughfare || "",
-      result.locality || "",
-      result.adminArea || "",
-      result.postalCode || "",
-      result.country || ""
-    ]).join(", ");
+    return result.thoroughfare;
   },
   // map(domnode, mapOptions)
   getMap: function(node, options) {
@@ -85,10 +78,10 @@ gmaps = {
         map: map,
         icon: icon
       }));
-    map.addMarker({
-      position: latLng,
-      icon: icon
-    }, callback);
+      map.addMarker({
+        position: latLng,
+        icon: icon
+      }, callback);
   },
   // latlng = marker.getPosition()
   getMarkerPosition: function(marker, callback) {
@@ -126,13 +119,14 @@ gmaps = {
   },
   // geocoder.geocode(latlng, callback)
   geocode: function(latLng, callback) {
-    if (!Meteor.isCordova)
+    if (!Meteor.isCordova) {
       return gmaps.geocoder.geocode({
         'latLng': latLng
       }, function(results, status) {
         if (status !== google.maps.GeocoderStatus.OK) return callback([]);
         callback(results);
       });
+    }
     return gmaps.geocoder.geocode({
       'position': latLng
     }, callback);
@@ -154,14 +148,14 @@ gmaps = {
     });
     if (gmaps.route) gmaps.route.remove();
     return gmaps.map.addPolyline({
-        points: points,
-        'color': '#000',
-        'width': 2,
-        'geodesic': false
-      },
-      function(route) {
-        gmaps.route = route;
-      });
+      points: points,
+      'color': '#000',
+      'width': 2,
+      'geodesic': false
+    },
+    function(route) {
+      gmaps.route = route;
+    });
   },
   // v3: directionsResponse
   // v3: directionsStatus
@@ -284,7 +278,7 @@ gmaps = {
       bounds.extend(myPos);
       var ne = bounds.getNorthEast();
       var sw = bounds.getSouthWest();
-      var newSWLat, newSWLon, newNELat, newSWLon;
+      var newSWLat, newSWLon, newNELat, newNELon;
       if (Math.abs(myPos.lat() - ne.lat()) > Math.abs(myPos.lat() - sw.lat())) {
         newNELat = ne.lat();
         newSWLat = myPos.lat() - Math.abs(myPos.lat() - ne.lat());
@@ -360,7 +354,7 @@ gmaps = {
     var directionOptions = {
       suppressMarkers: true,
       preserveViewport: true
-    }
+    };
 
     gmaps.directionsService = gmaps.getDirectionsService();
     gmaps.directionsDisplay = gmaps.getDirectionsRenderer(directionOptions);
@@ -376,4 +370,4 @@ gmaps = {
     Session.set("map", true);
   }
 
-}
+};
