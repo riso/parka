@@ -15,21 +15,6 @@ Tracker.autorun(function() {
   }
 });
 
-Template.registerHelper('parkingLocation', function(parking) {
-  var loc = ParkingLocations.findOne({
-    'parkingId': parking._id
-  });
-  if (!loc) return parking.lat + ', ' + parking.lon;
-  return loc.location;
-});
-
-Template.registerHelper('eta', function(parking) {
-  var loc = ParkingLocations.findOne({
-    'parkingId': parking._id
-  });
-  if (!loc || !loc.transitInfo) return null;
-  return Math.round(loc.transitInfo.duration / 60);
-});
 
 Template.registerHelper('isCordova', function() {
   return Meteor.isCordova;
@@ -96,7 +81,7 @@ Template.page.rendered = function() {
       });
     }
   });
-}
+};
 
 Template.details.helpers({
   parking: function() {
@@ -115,6 +100,28 @@ Template.details.events({
         'to': gmaps.getLatLng(park.lat, park.lon),
         'travelMode': 'driving'
       });
-    };
+    }
+  }
+});
+
+Template.parkingInfo.helpers({
+  parkingLocation: function(parking) {
+    var loc = ParkingLocations.findOne({
+      'parkingId': parking._id
+    });
+    if (!loc) return parking.lat + ', ' + parking.lon;
+    return loc.location;
+  },
+  eta: function(parking) {
+    var loc = ParkingLocations.findOne({
+      'parkingId': parking._id
+    });
+    if (!loc || !loc.transitInfo) return null;
+    return Math.round(loc.transitInfo.duration / 60);
+  },
+  sharer: function(parking) {
+    var sharer = Meteor.users.findOne(parking.userId);
+    if (!sharer) return null;
+    return sharer.profile.name;
   }
 });

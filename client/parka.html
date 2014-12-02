@@ -13,36 +13,37 @@
 
 <template name="page">
   {{#if error}}
-  <div class="alert alert-error alert-danger alert-dismissable">
-    <button type="button" class="close" data-dismiss="alert">&times;</button>
-    {{error}}
-  </div>
+    <div class="alert alert-error alert-danger alert-dismissable">
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+      {{error}}
+    </div>
   {{/if}}
   <div class="row map">
     <div class="col-md-6 col-sm-12 map">
       <div id="map-canvas">
         {{#if isCordova}}
-        <div class="col-xs-12 mobile-footer">
-          {{> details}}
-        </div>
+          <div class="col-xs-12 mobile-footer">
+            {{> details}}
+          </div>
         {{/if}}
       </div>
     </div>
     <div class="col-md-6 col-sm-4 parkings-info">
       <div class="row">
         <div class="col-xs-12">
+          {{> loginButtons}}
           <h2>Shh! Your Parka knows secret parkings are available..</h2>
           <div class="list-group">
             {{#each parkings}}
-            <a href="#" class="list-group-item {{selected}}">
-              {{> parkingInfo}}
+              <a href="#" class="list-group-item {{selected}}">
+                {{> parkingInfo}}
             </a> {{/each}}
           </div>
         </div>
         {{#unless isCordova}}
-        <div class="col-xs-12 mobile-footer">
-          {{> details}}
-        </div>
+          <div class="col-xs-12 mobile-footer">
+            {{> details}}
+          </div>
         {{/unless}}
       </div>
     </div>
@@ -51,24 +52,30 @@
 
 <template name="details">
   <div class="panel details">
-    {{#if parking}} {{#with parking}}
-    <div class="row parking-info">
-      <div class="col-xs-9 parking-location">
-        {{> parkingInfo}}
-      </div>
-      <div class="col-xs-3 parking-controls">
-        <button class="btn btn-primary btn-sm pull-right pick">Pick it!</button>
-      </div>
-    </div>
-    {{/with}} {{else}}
-    <span>Select a parking and pick it!</span> {{/if}}
+    {{#if parking}} 
+      {{#with parking}}
+        <div class="row parking-info">
+          <div class="col-xs-9 parking-location">
+            {{> parkingInfo}}
+          </div>
+          <div class="col-xs-3 parking-controls">
+            <button class="btn btn-primary btn-sm pull-right pick">Pick it!</button>
+          </div>
+        </div>
+      {{/with}}
+      {{else}}
+      <span>Select a parking and pick it!</span> 
+    {{/if}}
   </div>
 </template>
 
 <template name="parkingInfo">
   <div>{{parkingLocation this}}</div>
   {{#if eta this}}
-  <div class="eta"><small>Distance: <strong>~{{eta this}}</strong> mins</small>
-  </div>
+    <div class="eta"><small>Distance: <strong>~{{eta this}}</strong> mins</small>
+    </div>
+  {{/if}}
+  {{#if sharer this}}
+    <div class="sharer"><small>Shared by: <strong>{{sharer this}}</strong></small></div>
   {{/if}}
 </template>

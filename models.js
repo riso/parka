@@ -29,6 +29,7 @@ Meteor.methods({
       _id: id,
       lat: options.lat,
       lon: options.lon,
+      userId: Meteor.userId(),
       freshness: "fresh",
       loc: {
         type: "Point",

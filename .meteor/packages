@@ -10,4 +10,7 @@ mdg:reload-on-resume
 mdg:geolocation
 bootstrap
 mizzao:bootstrap-3
+accounts-password
+accounts-ui
+accounts-facebook
 
