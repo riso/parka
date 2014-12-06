@@ -6,45 +6,45 @@
 </head>
 
 <body>
-  <div class="container-fluid map">
-    {{> page}}
-  </div>
 </body>
 
 <template name="page">
-  {{#if error}}
-    <div class="alert alert-error alert-danger alert-dismissable">
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
-      {{error}}
-    </div>
-  {{/if}}
-  <div class="row map">
-    <div class="col-md-6 col-sm-12 map">
-      <div id="map-canvas">
-        {{#if isCordova}}
-          <div class="col-xs-12 mobile-footer">
-            {{> details}}
-          </div>
-        {{/if}}
+  <div class="container-fluid map">
+    {{#if error}}
+      <div class="alert alert-error alert-danger alert-dismissable">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        {{error}}
       </div>
-    </div>
-    <div class="col-md-6 col-sm-4 parkings-info">
-      <div class="row">
-        <div class="col-xs-12">
-          {{> loginButtons}}
-          <h2>Shh! Your Parka knows secret parkings are available..</h2>
-          <div class="list-group">
-            {{#each parkings}}
-              <a href="#" class="list-group-item {{selected}}">
-                {{> parkingInfo}}
-            </a> {{/each}}
-          </div>
+    {{/if}}
+    <div class="row map">
+      <div class="col-md-6 col-sm-12 map">
+        <div id="map-canvas">
+          {{#if isCordova}}
+            <div class="col-xs-12 mobile-footer">
+              {{> yield}}
+            </div>
+          {{/if}}
         </div>
-        {{#unless isCordova}}
-          <div class="col-xs-12 mobile-footer">
-            {{> details}}
+      </div>
+      <div class="col-md-6 col-sm-4 parkings-info">
+        <div class="row">
+          <div class="col-xs-12">
+            {{> loginButtons}}
+            <h2>Shh! Your Parka knows secret parkings are available..</h2>
+            <div class="list-group">
+              {{#each parkings}}
+                <a href="{{pathFor route='parking'}}" class="list-group-item {{selected}}">
+                  {{> parkingInfo}}
+                </a> 
+              {{/each}}
+            </div>
           </div>
-        {{/unless}}
+          {{#unless isCordova}}
+            <div class="col-xs-12 mobile-footer">
+              {{> yield}}
+            </div>
+          {{/unless}}
+        </div>
       </div>
     </div>
   </div>
@@ -52,17 +52,15 @@
 
 <template name="details">
   <div class="panel details">
-    {{#if parking}} 
-      {{#with parking}}
-        <div class="row parking-info">
-          <div class="col-xs-9 parking-location">
-            {{> parkingInfo}}
-          </div>
-          <div class="col-xs-3 parking-controls">
-            <button class="btn btn-primary btn-sm pull-right pick">Pick it!</button>
-          </div>
+    {{#if parking}}
+      <div class="row parking-info">
+        <div class="col-xs-9 parking-location">
+          {{> parkingInfo}}
         </div>
-      {{/with}}
+        <div class="col-xs-3 parking-controls">
+          <button class="btn btn-primary btn-sm pull-right pick">Pick it!</button>
+        </div>
+      </div>
       {{else}}
       <span>Select a parking and pick it!</span> 
     {{/if}}
@@ -70,7 +68,7 @@
 </template>
 
 <template name="parkingInfo">
-  <div>{{parkingLocation this}}</div>
+  <div>{{parkingLocation}}</div>
   {{#if eta this}}
     <div class="eta"><small>Distance: <strong>~{{eta this}}</strong> mins</small>
     </div>

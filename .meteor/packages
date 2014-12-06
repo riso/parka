@@ -13,4 +13,5 @@ mizzao:bootstrap-3
 accounts-password
 accounts-ui
 accounts-facebook
+iron:router
 

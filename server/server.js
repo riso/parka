@@ -52,6 +52,10 @@ Meteor.publish("parkings", function(lat, lon) {
   });
 });
 
+Meteor.publish('parking', function(id) {
+  return Parkings.find(id);
+});
+
 Meteor.publish("directory", function () {
   return Meteor.users.find({}, {fields: {emails: 1, profile: 1}});
 });
