@@ -140,8 +140,10 @@ gmaps = {
   // v3: directionsService.route(request, callback(response, status))
   // v3: directionsDisplay.setDirections(response)
   setDirections: function(response) {
-    if (!Meteor.isCordova)
+    if (!Meteor.isCordova) {
+      gmaps.directionsDisplay.setMap(gmaps.map);
       return gmaps.directionsDisplay.setDirections(response);
+    }
     var route = response.routes[0];
     var points = _.map(route.overview_path, function(latLng) {
       return new plugin.google.maps.LatLng(latLng.lat(), latLng.lng());
@@ -156,6 +158,14 @@ gmaps = {
     function(route) {
       gmaps.route = route;
     });
+  },
+  clearDirections: function() {
+    if (!Meteor.isCordova)
+      return gmaps.directionsDisplay.setMap(null);
+    if (gmaps.route) {
+      gmaps.route.remove();
+      gmaps.route = null;
+    }
   },
   // v3: directionsResponse
   // v3: directionsStatus

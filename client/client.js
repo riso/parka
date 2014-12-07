@@ -13,6 +13,7 @@ Tracker.autorun(function() {
 Tracker.autorun(function() {
   var selected = Session.get("selected");
   if (selected) Router.go('/parking/' + selected);
+  else Router.go('/');
 });
 
 Tracker.autorun(function() {
@@ -21,6 +22,8 @@ Tracker.autorun(function() {
   if (selected && myPosition) {
     var park = Parkings.findOne(selected);
     if (park) gmaps.calcRoute(park.lat, park.lon);
+  } else {
+    gmaps.clearDirections();
   }
 });
 
@@ -102,6 +105,7 @@ Template.details.events({
   'click .pick, touchend .pick': function() {
     var park = Parkings.findOne(Session.get("selected"));
     Parkings.remove(Session.get("selected"));
+    Session.set("selected", null);
     if (Meteor.isCordova) {
       var myPosition = Session.get("myPosition");
       plugin.google.maps.external.launchNavigation({

@@ -1,6 +1,7 @@
 Router.route('/', function() {
-  this.layout('page');
-  this.render('parkingInfo');
+  this.render('details');
+}, {
+  layoutTemplate: 'page'
 });
 
 Router.route('/parking/:_id', function() {
@@ -9,7 +10,8 @@ Router.route('/parking/:_id', function() {
     this.render('details', {
       data: function() {
         var parking = Parkings.findOne({_id: this.params._id});
-        Session.set("selected", parking._id);
+        if (parking)
+          Session.set("selected", parking._id);
         return parking;
       }
     });
