@@ -15,8 +15,6 @@ Tracker.autorun(function() {
   if (map) {
     var selected = Session.get("selected");
     var myPosition = Session.get("myPosition");
-    if (selected) Router.go('/parking/' + selected);
-    else Router.go('/');
     if (selected && myPosition) {
       var park = Parkings.findOne(selected);
       if (park) gmaps.calcRoute(park.lat, park.lon);
@@ -46,7 +44,7 @@ Template.page.helpers({
 
 Template.page.events({
   'click .list-group-item': function() {
-    Session.set("selected", this._id);
+    Router.go('/parking/' + this._id);
   }
 });
 
@@ -54,10 +52,14 @@ Template.page.rendered = function() {
   var initialized = false;
   gmaps.initialize();
 
+  var throttledGeocode = rateLimit(
+    function(id, fields) {
+      gmaps.reverseGeocode(id, fields);
+    }, 250);
   Parkings.find().observeChanges({
     added: function(id, fields) {
       gmaps.placeMarker(id, fields);
-      gmaps.reverseGeocode(id, fields);
+      throttledGeocode(id, fields);
       // TODO readd gmaps.zoomMap();
     },
     removed: function(id) {
@@ -104,7 +106,7 @@ Template.details.events({
   'click .pick, touchend .pick': function() {
     var park = Parkings.findOne(Session.get("selected"));
     Meteor.call('pickParking', Session.get("selected"));
-    Session.set("selected", null);
+    Router.go('/')
     if (Meteor.isCordova) {
       var myPosition = Session.get("myPosition");
       plugin.google.maps.external.launchNavigation({
@@ -139,5 +141,11 @@ Template.parkingInfo.helpers({
     if (!sharer) return null;
     if (sharer.profile) return sharer.profile.name;
     return sharer.emails[0].address;
+  },
+  status: function() {
+    if (_.isUndefined(this) || _.isNull(this)) return;
+    var status = this.active;
+    if (status) return "Available";
+    return "Gone";
   }
 });
