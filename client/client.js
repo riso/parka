@@ -17,13 +17,16 @@ Tracker.autorun(function() {
 });
 
 Tracker.autorun(function() {
-  var selected = Session.get("selected");
-  var myPosition = Session.get("myPosition");
-  if (selected && myPosition) {
-    var park = Parkings.findOne(selected);
-    if (park) gmaps.calcRoute(park.lat, park.lon);
-  } else {
-    gmaps.clearDirections();
+  var map = Session.get("map");
+  if (map) {
+    var selected = Session.get("selected");
+    var myPosition = Session.get("myPosition");
+    if (selected && myPosition) {
+      var park = Parkings.findOne(selected);
+      if (park) gmaps.calcRoute(park.lat, park.lon);
+    } else {
+      gmaps.clearDirections();
+    }
   }
 });
 
