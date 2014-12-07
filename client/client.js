@@ -66,6 +66,8 @@ Template.page.rendered = function() {
       // TODO readd gmaps.zoomMap();
     },
     changed: function(id, fields) {
+      if (!fields.active)
+        gmaps.deleteMarker(id);
       gmaps.updateMarker(id, fields.freshness);
     }
   });
@@ -104,7 +106,7 @@ Template.details.helpers({
 Template.details.events({
   'click .pick, touchend .pick': function() {
     var park = Parkings.findOne(Session.get("selected"));
-    Parkings.remove(Session.get("selected"));
+    Meteor.call('pickParking', Session.get("selected"));
     Session.set("selected", null);
     if (Meteor.isCordova) {
       var myPosition = Session.get("myPosition");
