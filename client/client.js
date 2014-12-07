@@ -11,16 +11,12 @@ Tracker.autorun(function() {
 });
 
 Tracker.autorun(function() {
-  var selected = Session.get("selected");
-  if (selected) Router.go('/parking/' + selected);
-  else Router.go('/');
-});
-
-Tracker.autorun(function() {
   var map = Session.get("map");
   if (map) {
     var selected = Session.get("selected");
     var myPosition = Session.get("myPosition");
+    if (selected) Router.go('/parking/' + selected);
+    else Router.go('/');
     if (selected && myPosition) {
       var park = Parkings.findOne(selected);
       if (park) gmaps.calcRoute(park.lat, park.lon);
@@ -69,8 +65,6 @@ Template.page.rendered = function() {
       // TODO readd gmaps.zoomMap();
     },
     changed: function(id, fields) {
-      if (!fields.active)
-        gmaps.deleteMarker(id);
       gmaps.updateMarker(id, fields.freshness);
     }
   });

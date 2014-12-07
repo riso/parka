@@ -1,4 +1,5 @@
 Router.route('/', function() {
+  Session.set("selected", null);
   this.render('details');
 }, {
   layoutTemplate: 'page'
