@@ -222,10 +222,9 @@ gmaps = {
     gmaps.geocode(latlng, function(results) {
       if (results.length) {
         if (results[0]) {
-          ParkingLocations.insert({
-            parkingId: parkingId,
+          Parkings.update(parkingId, { $set: {
             location: gmaps.getFormattedAddress(results[0])
-          });
+          }});
         } else {
           return;
         }
@@ -335,12 +334,9 @@ gmaps = {
             distance: 0,
             duration: 0
           });
-          ParkingLocations.update({
-            parkingId: Session.get("selected")
-          }, {
-            $set: {
-              'transitInfo': transitInfo
-            }
+          ParkingLocations.insert({
+            parkingId: Session.get("selected") , 
+            transitInfo: transitInfo
           });
         }
       });
