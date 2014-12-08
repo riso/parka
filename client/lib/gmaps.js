@@ -204,7 +204,7 @@ gmaps = {
       marker.parkingId = id;
       gmaps.markers.push(marker);
       gmaps.addMarkerListener(marker, gmaps.getSelectEvent(), function() {
-        Session.set("selected", id);
+        Router.go('/parking/' + id);
       });
     });
   },

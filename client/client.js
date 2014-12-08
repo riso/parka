@@ -11,12 +11,6 @@ Tracker.autorun(function() {
 });
 
 Tracker.autorun(function() {
-  var selected = Session.get("selected");
-  if (selected) Router.go('/parking/' + selected);
-  else Router.go('/');
-});
-
-Tracker.autorun(function() {
   var map = Session.get("map");
   if (map) {
     var selected = Session.get("selected");
@@ -50,7 +44,7 @@ Template.page.helpers({
 
 Template.page.events({
   'click .list-group-item': function() {
-    Session.set("selected", this._id);
+    Router.go('/parking/' + this._id);
   }
 });
 
@@ -58,10 +52,14 @@ Template.page.rendered = function() {
   var initialized = false;
   gmaps.initialize();
 
+  var throttledGeocode = rateLimit(
+    function(id, fields) {
+      gmaps.reverseGeocode(id, fields);
+    }, 250);
   Parkings.find().observeChanges({
     added: function(id, fields) {
       gmaps.placeMarker(id, fields);
-      gmaps.reverseGeocode(id, fields);
+      throttledGeocode(id, fields);
       // TODO readd gmaps.zoomMap();
     },
     removed: function(id) {
@@ -108,7 +106,7 @@ Template.details.events({
   'click .pick, touchend .pick': function() {
     var park = Parkings.findOne(Session.get("selected"));
     Parkings.remove(Session.get("selected"));
-    Session.set("selected", null);
+    Router.go('/')
     if (Meteor.isCordova) {
       var myPosition = Session.get("myPosition");
       plugin.google.maps.external.launchNavigation({

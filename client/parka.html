@@ -69,11 +69,12 @@
 
 <template name="parkingInfo">
   <div>{{parkingLocation}}</div>
-  {{#if eta this}}
-    <div class="eta"><small>Distance: <strong>~{{eta this}}</strong> mins</small>
+  {{#if eta}}
+    <div class="eta"><small>Distance: <strong>~{{eta}}</strong> mins</small>
     </div>
   {{/if}}
-  {{#if sharer this}}
-    <div class="sharer"><small>Shared by: <strong>{{sharer this}}</strong></small></div>
+  {{#if sharer}}
+    <div class="sharer"><small>Shared by: <strong>{{sharer}}</strong></small></div>
   {{/if}}
+    <div class="status"><small><strong>{{status}}</strong></small></div>
 </template>

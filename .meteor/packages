@@ -14,4 +14,5 @@ accounts-password
 accounts-ui
 accounts-facebook
 iron:router
+dandv:rate-limit
 
