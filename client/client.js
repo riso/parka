@@ -59,7 +59,7 @@ Template.page.rendered = function() {
   Parkings.find().observeChanges({
     added: function(id, fields) {
       gmaps.placeMarker(id, fields);
-      if (!this.isSimulation)
+      if (!fields.location)
         throttledGeocode(id, fields);
       // TODO readd gmaps.zoomMap();
     },
@@ -122,11 +122,8 @@ Template.details.events({
 Template.parkingInfo.helpers({
   parkingLocation: function() {
     if (_.isUndefined(this) || _.isNull(this)) return;
-    var loc = ParkingLocations.findOne({
-      'parkingId': this._id
-    });
-    if (!loc) return this.lat + ', ' + this.lon;
-    return loc.location;
+    if (!this.location) return this.lat + ', ' + this.lon;
+    return this.location;
   },
   eta: function() {
     if (_.isUndefined(this) || _.isNull(this)) return;
