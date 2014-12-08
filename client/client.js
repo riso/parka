@@ -54,12 +54,13 @@ Template.page.rendered = function() {
 
   var throttledGeocode = rateLimit(
     function(id, fields) {
-      gmaps.reverseGeocode(id, fields);
-    }, 250);
+    gmaps.reverseGeocode(id, fields);
+  }, 250);
   Parkings.find().observeChanges({
     added: function(id, fields) {
       gmaps.placeMarker(id, fields);
-      throttledGeocode(id, fields);
+      if (!this.isSimulation)
+        throttledGeocode(id, fields);
       // TODO readd gmaps.zoomMap();
     },
     removed: function(id) {
@@ -106,7 +107,7 @@ Template.details.events({
   'click .pick, touchend .pick': function() {
     var park = Parkings.findOne(Session.get("selected"));
     Meteor.call('pickParking', Session.get("selected"));
-    Router.go('/')
+    Router.go('/');
     if (Meteor.isCordova) {
       var myPosition = Session.get("myPosition");
       plugin.google.maps.external.launchNavigation({
