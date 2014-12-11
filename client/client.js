@@ -17,11 +17,21 @@ Tracker.autorun(function() {
     var myPosition = Session.get("myPosition");
     if (selected && myPosition) {
       var park = Parkings.findOne(selected);
-      if (park) gmaps.calcRoute(park.lat, park.lon);
+      if (park && park.active) {
+        gmaps.calcRoute(park.lat, park.lon);
+
+        Tracker.autorun(function() {
+          var directions = Session.get("directions");
+          if (directions)
+            gmaps.setDirections(directions);
+        });
+      }
+      else Router.go('/');
     } else {
       gmaps.clearDirections();
     }
   }
+
 });
 
 

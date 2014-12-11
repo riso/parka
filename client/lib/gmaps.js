@@ -139,15 +139,26 @@ gmaps = {
   // v2: map.fitBounds(latlngbounds)
   // v3: directionsService.route(request, callback(response, status))
   // v3: directionsDisplay.setDirections(response)
-  setDirections: function(response) {
-    if (!Meteor.isCordova) {
-      gmaps.directionsDisplay.setMap(gmaps.map);
-      return gmaps.directionsDisplay.setDirections(response);
-    }
+  getPolylineCoords: function(response) {
     var route = response.routes[0];
-    var points = _.map(route.overview_path, function(latLng) {
-      return new plugin.google.maps.LatLng(latLng.lat(), latLng.lng());
+    return _.map(route.overview_path, function(point) {
+      return {lat: point.lat(), lng: point.lng()};
     });
+  },
+  setDirections: function(coordinates) {
+    var points = _.map(coordinates, function(coord) {
+      return gmaps.getLatLng(coord.lat, coord.lng);
+    });
+    if (!Meteor.isCordova) {
+      if (gmaps.route) gmaps.route.setMap(null);
+      gmaps.route = new google.maps.Polyline({
+        path: points,
+        geodesic: false,
+        strokeColor: '#000',
+        strokeWeight: 2
+      });
+      return gmaps.route.setMap(gmaps.map);
+    }
     if (gmaps.route) gmaps.route.remove();
     return gmaps.map.addPolyline({
       points: points,
@@ -160,8 +171,10 @@ gmaps = {
     });
   },
   clearDirections: function() {
-    if (!Meteor.isCordova)
-      return gmaps.directionsDisplay.setMap(null);
+    if (!Meteor.isCordova) {
+      if (!gmaps.route) return;
+      return gmaps.route.setMap(null);
+    }
     if (gmaps.route) {
       gmaps.route.remove();
       gmaps.route = null;
@@ -323,8 +336,9 @@ gmaps = {
       };
       gmaps.directionsService.route(request, function(response, status) {
         if (status == google.maps.DirectionsStatus.OK) {
-          gmaps.setDirections(response);
           var route = response.routes[0];
+          var polyline = gmaps.getPolylineCoords(response);
+          Session.set("directions", polyline);
           var transitInfo = _.reduce(route.legs, function(acc, leg) {
             return {
               distance: acc.distance + leg.distance.value,
