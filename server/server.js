@@ -38,7 +38,7 @@ Meteor.startup(function() {
 });
 
 Meteor.publish("parkings", function(lat, lon) {
-  return Parkings.find({
+  return Parkings.find({ $and: [{
     loc: {
       $near: {
         $geometry: {
@@ -48,6 +48,8 @@ Meteor.publish("parkings", function(lat, lon) {
       }
     }
   }, {
+    active: true
+  }]}, {
     limit: 5
   });
 });

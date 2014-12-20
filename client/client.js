@@ -17,11 +17,21 @@ Tracker.autorun(function() {
     var myPosition = Session.get("myPosition");
     if (selected && myPosition) {
       var park = Parkings.findOne(selected);
-      if (park) gmaps.calcRoute(park.lat, park.lon);
+      if (park && park.active) {
+        gmaps.calcRoute(park.lat, park.lon);
+
+        Tracker.autorun(function() {
+          var directions = Session.get("directions");
+          if (directions)
+            gmaps.setDirections(directions);
+        });
+      }
+      else Router.go('/');
     } else {
       gmaps.clearDirections();
     }
   }
+
 });
 
 
@@ -106,7 +116,7 @@ Template.details.helpers({
 Template.details.events({
   'click .pick, touchend .pick': function() {
     var park = Parkings.findOne(Session.get("selected"));
-    Parkings.remove(Session.get("selected"));
+    Meteor.call('pickParking', Session.get("selected"));
     Router.go('/');
     if (Meteor.isCordova) {
       var myPosition = Session.get("myPosition");
@@ -139,5 +149,11 @@ Template.parkingInfo.helpers({
     if (!sharer) return null;
     if (sharer.profile) return sharer.profile.name;
     return sharer.emails[0].address;
+  },
+  status: function() {
+    if (_.isUndefined(this) || _.isNull(this)) return;
+    var status = this.active;
+    if (status) return "Available";
+    return "Gone";
   }
 });

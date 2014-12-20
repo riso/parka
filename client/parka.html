@@ -58,7 +58,9 @@
           {{> parkingInfo}}
         </div>
         <div class="col-xs-3 parking-controls">
-          <button class="btn btn-primary btn-sm pull-right pick">Pick it!</button>
+          {{#if active}}
+            <button class="btn btn-primary btn-sm pull-right pick">Pick it!</button>
+          {{/if}}
         </div>
       </div>
       {{else}}

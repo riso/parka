@@ -1,6 +1,8 @@
 Router.route('/', function() {
+  Session.set("selected", null);
   this.render('details');
 }, {
+  name: 'home',
   layoutTemplate: 'page'
 });
 
@@ -15,8 +17,9 @@ Router.route('/parking/:_id',  {
       this.render('details', {
         data: function() {
           var parking = Parkings.findOne({_id: this.params._id});
-          if (parking)
+          if (parking && !Session.equals("selected", parking._id)) {
             Session.set("selected", parking._id);
+          }
           return parking;
         }
       });

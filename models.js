@@ -31,12 +31,19 @@ Meteor.methods({
       lon: options.lon,
       userId: Meteor.userId(),
       freshness: "fresh",
+      active: true,
       loc: {
         type: "Point",
         coordinates: [options.lon, options.lat]
       }
     });
 
+    return id;
+  },
+  pickParking: function(id) {
+    check(id, NonEmptyString);
+
+    Parkings.update(id, {$set: {'active': false}});
     return id;
   }
 });
