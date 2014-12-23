@@ -157,3 +157,17 @@ Template.parkingInfo.helpers({
     return "Gone";
   }
 });
+
+Template.profile.helpers({
+  profileSchema: function() {
+    return Schema.profile;
+  }
+});
+
+AutoForm.hooks({
+  'profile-form': {
+    onSuccess: function() {
+      Router.go('/');
+    }
+  }
+});

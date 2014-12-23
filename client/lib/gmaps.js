@@ -359,6 +359,10 @@ gmaps = {
 
   initialize: function() {
 
+    gmaps.me = null;
+    gmaps.markers = [];
+    gmaps.route = null;
+
     var mapOptions = {
       zoom: 17,
       mapTypeId: gmaps.getMapType()

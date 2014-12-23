@@ -45,5 +45,25 @@ Meteor.methods({
 
     Parkings.update(id, {$set: {'active': false}});
     return id;
+  },
+  updateProfile: function(profile) {
+    // Important server-side check for security and data integrity
+    check(profile, Schema.profile);
+    Meteor.users.update(Meteor.userId(), {$set: {'profile': profile}});
+    return Meteor.userId();
+  }
+});
+
+Schema = {};
+Schema.profile = new SimpleSchema({
+  name: {
+    type: String,
+    label: "Your name",
+    max: 50
+  },
+  email: {
+    type: String,
+    regEx: SimpleSchema.RegEx.Email,
+    label: "E-mail address"
   }
 });

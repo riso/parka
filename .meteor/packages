@@ -16,3 +16,5 @@ accounts-facebook
 iron:router
 dandv:rate-limit
 
+aldeed:autoform
+aldeed:collection2

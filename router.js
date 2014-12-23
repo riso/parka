@@ -26,3 +26,16 @@ Router.route('/parking/:_id',  {
     }
   }
 });
+
+Router.route('/profile', {
+  name: 'profile',
+  action: function() {
+    this.render('profile', {
+      data: function() {
+        var user = Meteor.user();
+        if (!user) return null;
+        return user.profile;
+      }
+    });
+  }
+});
