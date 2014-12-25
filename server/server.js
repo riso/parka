@@ -1,3 +1,5 @@
+Accounts.config({loginExpirationInDays: null});
+
 Meteor.startup(function() {
   Parkings._ensureIndex({
     'loc': '2dsphere'
