@@ -16,6 +16,7 @@
         {{error}}
       </div>
     {{/if}}
+    {{> yield "welcome"}}
     <div class="row map">
       <div class="col-md-6 col-sm-12 map">
         <div id="map-canvas">
@@ -98,6 +99,18 @@
           </div>
         </fieldset>
       {{/autoForm}}
+    </div>
+  </div>
+</template>
+
+<template name="welcome">
+  <div class="pk-modal" id="pk-modal-one" aria-hidden="true">
+    <div class="pk-modal-dialog">
+      <div class="pk-modal-body">
+        <h2>Welcome to Parka!</h2>
+        <p>One modal example here! :D</p>
+        <a class="btn close">Nice!</a>  <!--CHANGED TO "#close"-->
+      </div>
     </div>
   </div>
 </template>

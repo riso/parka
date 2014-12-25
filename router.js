@@ -1,3 +1,12 @@
+Tracker.autorun(function() {
+  Router.onBeforeAction(function() {
+    var firstAccess = LocalStore.get('firstAccess');
+    if (!firstAccess) this.render('welcome', {to: 'welcome'});
+    else this.render(null, {to: 'welcome'});
+    this.next();
+  });
+});
+
 Router.route('/', function() {
   Session.set("selected", null);
   this.render('details');

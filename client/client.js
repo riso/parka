@@ -62,6 +62,9 @@ Template.page.rendered = function() {
   var initialized = false;
   gmaps.initialize();
 
+  var firstAccess = localStorage.getItem('firstAccess');
+  if (!firstAccess) $('#welcome').modal('show');
+
   var throttledGeocode = rateLimit(
     function(id, fields) {
     gmaps.reverseGeocode(id, fields);
@@ -169,5 +172,11 @@ AutoForm.hooks({
     onSuccess: function() {
       Router.go('/');
     }
+  }
+});
+
+Template.welcome.events({
+  'click .close, touchend .close': function() {
+    LocalStore.set('firstAccess', true);
   }
 });
